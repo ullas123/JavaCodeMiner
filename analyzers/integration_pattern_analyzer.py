@@ -41,6 +41,17 @@ class IntegrationPatternAnalyzer:
         }
         self.matches = []
 
+    def analyze_code(self, file_path: str, content: str) -> None:
+        """
+        Analyze the given code content for integration patterns.
+        This is the main entry point for code analysis.
+
+        Args:
+            file_path: Path to the file being analyzed
+            content: The source code content to analyze
+        """
+        self.analyze_file(file_path, content)
+
     def analyze_file(self, file_path: str, content: str) -> None:
         lines = content.split('\n')
         for line_number, line in enumerate(lines, 1):
@@ -69,3 +80,13 @@ class IntegrationPatternAnalyzer:
         for pattern_type in self.integration_patterns.keys():
             stats[pattern_type] = len([m for m in self.matches if m.pattern_type == pattern_type])
         return stats
+
+    def get_patterns(self) -> Dict[str, List[PatternMatch]]:
+        """
+        Get all detected patterns grouped by type.
+        This method is called by the main application to display results.
+
+        Returns:
+            Dict mapping pattern types to lists of matches
+        """
+        return self.get_pattern_summary()
