@@ -894,29 +894,19 @@ def display_project_structure(project_structure):
 
         if selected_file:
             # Find the selected file
-            file = next((f for f in files if f['path'] == selected_file), None)
+            file = next((f for f in files if isinstance(f, dict) and f.get('path') == selected_file), None)
             if file:
                 # Display classes in the selected file
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
+                for class_info in file.get('classes', []):
+                    with st.expander(f"📚 {class_info.get('name', 'Unknown Class')}"):
+                        st.markdown("**Methods:**")
+                        for method in class_info.get('methods', []):
+                            st.markdown(f"- {method.get('name', 'Unknown Method')}")
 
-                for class_info in file['classes']:
-                    with st.expander(f"🔷 {class_info['name']}", expanded=True):
-                        # Class details
-                        if class_info['extends']:
-                            st.markdown(f"*Extends:* `{class_info['extends']}`")
-                        if class_info['implements']:
-                            st.markdown(f"*Implements:* `{', '.join(class_info['implements'])}`")
-
-                        # Fields and Methods
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.markdown("**Fields:**")
-                            for field in class_info['fields']:
-                                st.markdown(f"- `{field}`")
-                        with col2:
-                            st.markdown("**Methods:**")
-                            for method in class_info['methods']:
-                                st.markdown(f"- `{method}`")
+                        st.markdown("**Fields:**")
+                        for field in class_info.get('fields', []):
+                            st.markdown(f"- {field.get('name', 'Unknown Field')}: {field.get('type', 'Unknown Type')}")
 
 def display_code_structure(project_structure):
     st.subheader("Code Structure Analysis")
