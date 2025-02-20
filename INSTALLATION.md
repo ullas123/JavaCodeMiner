@@ -1,15 +1,35 @@
-# CodeMXJ Installation Guide
+codemxj/
+   ├── analyzers/
+   │   ├── __init__.py
+   │   ├── code_parser.py
+   │   ├── uml_generator.py
+   │   ├── sequence_diagram.py
+   │   ├── call_graph.py
+   │   ├── project_analyzer.py
+   │   ├── java_class.py
+   │   ├── microservice_analyzer.py
+   │   ├── legacy_table_analyzer.py
+   │   ├── demographics_analyzer.py
+   │   ├── integration_pattern_analyzer.py
+   │   └── demographic_pattern_analyzer.py
+   ├── utils/
+   │   ├── __init__.py
+   │   └── helpers.py
+   ├── .streamlit/
+   │   └── config.toml
+   └── app.py
+   ```
 
-## Prerequisites
+2. **Create Configuration Files**
+   Create `.streamlit/config.toml` with:
+   ```toml
+   [server]
+   headless = true
+   address = "0.0.0.0"
+   port = 5000
+   ```
 
-1. **Required Software**
-   - Python 3.11 or higher
-   - Java JDK 11 or higher (for analyzing Java source code)
-   - pip (Python package manager)
-
-## Installation Steps
-
-1. **Install Required Packages**
+3. **Install Required Packages**
    ```bash
    pip install streamlit==1.24.0
    pip install javalang==0.13.0
@@ -20,31 +40,54 @@
    pip install plantuml-markdown
    ```
 
-2. **Configuration Setup**
-   Create a `.streamlit` directory and add `config.toml`:
+4. **Download Required Files**
+   You'll need to download these core files:
+   - `app.py` - Main application file (contains UI and analysis logic)
+   - `analyzers/*.py` - Analysis modules for different aspects of code
+   - `utils/helpers.py` - Utility functions for the application
+
+5. **Configure Python Path**
+   Ensure the project root directory is in your Python path:
    ```bash
-   mkdir .streamlit
-   ```
-   
-   Add to `.streamlit/config.toml`:
-   ```toml
-   [server]
-   headless = true
-   address = "0.0.0.0"
-   port = 5000
+   export PYTHONPATH="${PYTHONPATH}:/path/to/codemxj"
    ```
 
-3. **Verify Installation**
-   Run this command to verify all packages are installed correctly:
+6. **Start the Application**
    ```bash
-   python -c "import streamlit; import javalang; import networkx; import matplotlib; import pandas"
-   ```
-
-4. **Start the Application**
-   ```bash
+   cd codemxj
    streamlit run app.py
    ```
    The application will be available at `http://localhost:5000`
+
+## Key Files Description
+
+1. **app.py**
+   - Main application file
+   - Contains Streamlit UI code
+   - Handles file upload and analysis coordination
+   - Implements visualization logic
+
+2. **analyzers/**
+   - `code_parser.py` - Java code parsing functionality
+   - `uml_generator.py` - UML diagram generation
+   - `project_analyzer.py` - Project structure analysis
+   - `java_class.py` - Java class model definitions
+   - Other analyzers for specific features (microservices, patterns, etc.)
+
+3. **utils/helpers.py**
+   - Utility functions for code highlighting
+   - File handling helpers
+   - Progress bar implementations
+   - Error handling utilities
+
+## Verification
+
+After installation, verify the following:
+1. The web interface loads correctly at http://localhost:5000
+2. You can upload a Java project ZIP file
+3. The analysis tabs are visible and functional
+4. UML diagram generation works
+5. Project structure analysis completes successfully
 
 ## Troubleshooting
 
@@ -59,26 +102,3 @@
    If port 5000 is already in use:
    ```bash
    streamlit run app.py --server.port 5001
-   ```
-
-3. **Java-Related Errors**
-   - Verify Java installation: `java -version`
-   - Ensure JAVA_HOME is set correctly
-   - Add Java to system PATH if needed
-
-## Verification
-
-After installation, verify the following:
-1. The web interface loads correctly at http://localhost:5000
-2. You can upload a Java project ZIP file
-3. The analysis tabs are visible and functional
-4. UML diagram generation works
-5. Project structure analysis completes successfully
-
-## Support
-
-If you encounter any issues during installation:
-1. Check the console for error messages
-2. Verify all prerequisites are installed
-3. Ensure all required ports are available
-4. Check system permissions for file access
