@@ -153,12 +153,12 @@ def main():
                 # Display Project Overview Tables
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    display_project_overview_table(project_structure)
+                    display_project_structure(project_structure) # Use the new function here
 
                 st.divider()
 
                 # Display Project Structure using the new function
-                display_project_structure(project_structure)
+                #display_project_structure(project_structure)
 
 
             # Diagrams Tab
@@ -166,7 +166,7 @@ def main():
                 display_diagrams_summary(java_files)
                 diagram_type = st.radio(
                     "Select Diagram Type",
-                    ["UML Class Diagram"]
+                    ["UML Class Diagram", "Class Dependencies"]
                 )
 
                 if diagram_type == "UML Class Diagram":
@@ -757,18 +757,24 @@ def main():
 
                 with demographics_col:
                     st.markdown("### Demographic Data Usage")
-                    demo_patterns = demo_analyzer.get_usage_patterns()
-                    if demo_patterns:
-                        for category, usages in demo_patterns.items():
-                            with st.expander(category):
-                                for usage in usages:
-                                    st.markdown(f"""
-                                    **Field:** {usage['field']}
-                                    - Location: {usage['location']}
-                                    - Usage Type: {usage['type']}
-                                    """)
+                    usage_data = demo_analyzer.get_usage_summary()
+                    if usage_data:
+                        total_fields = sum(len(fields) for fields in usage_data.values())
+                        st.metric("Total Demographic Fields", total_fields)
+
+                        # Display a summary of demographic data usage
+                        data = []
+                        for category, fields in usage_data.items():
+                            data.append({
+                                'Category': category,
+                                'Fields Count': len(fields),
+                                'Fields': ', '.join([f.field_name for f in fields])
+                            })
+                        if data:
+                            df = pd.DataFrame(data)
+                            st.dataframe(df)
                     else:
-                        st.info("No demographic data patterns found")
+                        st.info("No demographic data usage detected")
 
                 with integration_col:
                     st.markdown("### Integration Patterns")
@@ -801,38 +807,6 @@ def main():
     else:
         st.info("Please upload a Java project (ZIP file) to begin analysis")
 
-def display_project_overview_table(project_structure):
-    """Display project overview in a table format"""
-    # Calculate overview metrics
-    total_files = sum(len(files) for files in project_structure.values())
-    total_packages = len(project_structure)
-    total_controllers = 0
-    controller_list = []
-
-    # Count controllers and collect controller names
-    for package, files in project_structure.items():
-        for file in files:
-            for class_info in file['classes']:
-                if any(ann.get('name') == 'RestController' for ann in class_info.get('annotations', [])):
-                    total_controllers += 1
-                    controller_list.append(f"{package}.{class_info['name']}")
-
-    # Create overview table
-    overview_data = {
-        'Metric': ['Total Packages', 'Total Java Files', 'Total Controllers'],
-        'Count': [total_packages, total_files, total_controllers]
-    }
-
-    # Create and display tables
-    st.subheader("Project Overview")
-    df_overview = pd.DataFrame(overview_data)
-    st.dataframe(df_overview, hide_index=True)
-
-    if controller_list:
-        st.subheader("Controllers")
-        df_controllers = pd.DataFrame({'Controller': controller_list})
-        st.dataframe(df_controllers, hide_index=True)
-
 def display_project_structure(project_structure):
     st.subheader("Project Structure")
 
@@ -849,17 +823,20 @@ def display_project_structure(project_structure):
             'Name': package,
             'Path': '',
             'Classes': '',
+            'Methods': '',
             'Description': f'Package containing {len(files)} files'
         })
 
         # File rows
         for file in files:
             class_names = [cls['name'] for cls in file['classes']]
+            total_methods_in_file = sum(len(cls['methods']) for cls in file['classes'])
             data.append({
                 'Type': 'File',
                 'Name': os.path.basename(file['path']),
                 'Path': file['path'],
                 'Classes': ', '.join(class_names),
+                'Methods': total_methods_in_file,
                 'Description': file.get('description', '')
             })
 
@@ -867,8 +844,7 @@ def display_project_structure(project_structure):
     df = pd.DataFrame(data)
 
     # Display as an interactive table
-    st.dataframe(
-        df,
+    st.dataframe(df,
         column_config={
             'Type': st.column_config.TextColumn(
                 'Type',
@@ -876,19 +852,23 @@ def display_project_structure(project_structure):
             ),
             'Name': st.column_config.TextColumn(
                 'Name',
-                help='Name of the package or file'
+                help='Name of package or file'
             ),
             'Path': st.column_config.TextColumn(
                 'Path',
                 help='Full path of the file'
             ),
-            'Classes': st.column_config.TextColumn(
+            'Classes': st.column_config.NumberColumn(
                 'Classes',
-                help='Classes defined in the file'
+                help='Number of classes in the file'
+            ),
+            'Methods': st.column_config.NumberColumn(
+                'Methods',
+                help='Number of methods across all classes'
             ),
             'Description': st.column_config.TextColumn(
                 'Description',
-                help='Additional information'
+                help='Additional information about the item'
             )
         },
         hide_index=True
