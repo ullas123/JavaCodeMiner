@@ -266,7 +266,6 @@ def main():
                                         'Target Class': st.column_config.TextColumn('Parent Class'),
                                         'Details': st.column_config.TextColumn('Description')
                                     },
-                                    use_container_width=True,
                                     hide_index=True
                                 )
 
@@ -282,7 +281,6 @@ def main():
                                         'Target Class': st.column_config.TextColumn('Interface'),
                                         'Details': st.column_config.TextColumn('Description')
                                     },
-                                    use_container_width=True,
                                     hide_index=True
                                 )
 
@@ -298,7 +296,6 @@ def main():
                                         'Target Class': st.column_config.TextColumn('Contained Class'),
                                         'Details': st.column_config.TextColumn('Description')
                                     },
-                                    use_container_width=True,
                                     hide_index=True
                                 )
 
@@ -314,7 +311,6 @@ def main():
                                         'Target Class': st.column_config.TextColumn('Used Class'),
                                         'Details': st.column_config.TextColumn('Description')
                                     },
-                                    use_container_width=True,
                                     hide_index=True
                                 )
 
@@ -634,7 +630,7 @@ def main():
 
                                 if data:
                                     df = pd.DataFrame(data)
-                                    st.dataframe(df, use_container_width=True)
+                                    st.dataframe(df, hide_index=True)
 
                                     # Add download button for CSV export
                                     csv = df.to_csv(index=False)
@@ -807,12 +803,12 @@ def display_project_overview_table(project_structure):
     # Create and display tables
     st.subheader("Project Overview")
     df_overview = pd.DataFrame(overview_data)
-    st.dataframe(df_overview, use_container_width=True)
+    st.dataframe(df_overview, hide_index=True)
 
     if controller_list:
         st.subheader("Controllers")
         df_controllers = pd.DataFrame({'Controller': controller_list})
-        st.dataframe(df_controllers, use_container_width=True)
+        st.dataframe(df_controllers, hide_index=True)
 
 def display_project_structure(project_structure):
     st.subheader("Project Structure")
@@ -872,7 +868,6 @@ def display_project_structure(project_structure):
                 help='Additional information'
             )
         },
-        use_container_width=True,
         hide_index=True
     )
 
@@ -890,7 +885,7 @@ def display_project_structure(project_structure):
         files = project_structure[selected_package]
 
         # File selection
-        file_options = [file['path']for file in files]
+        file_options = [file['path'] for file in files]
         selected_file = st.selectbox(
             "Select File",
             options=file_options,
@@ -1071,7 +1066,7 @@ def analyze_database_schema(java_files, project_path):
 
                     if data:
                         df = pd.DataFrame(data)
-                        st.dataframe(df, use_container_width=True)
+                        st.dataframe(df, hide_index=True)
 
                         # Add download button
                         csv = df.to_csv(index=False)
