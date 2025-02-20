@@ -184,7 +184,7 @@ def main():
                         uml_code, uml_image = uml_generator.generate_class_diagram(all_classes)
 
                         # Display diagram first for better visibility
-                        st.image(uml_image, caption="Class Diagram", use_container_width=True)
+                        st.image(uml_image, caption="Class Diagram", width=None)
 
                         # Add download options in a cleaner layout
                         col1, col2 = st.columns(2)
@@ -398,7 +398,7 @@ def main():
                             )
 
                             # Display graph
-                            st.image(plot_image, caption="Class Dependency Graph", use_container_width=True)
+                            st.image(plot_image, caption="Class Dependency Graph", width=None)
 
                             # Display legend
                             st.markdown("""
@@ -530,7 +530,7 @@ def main():
                         buf = BytesIO()
                         plt.savefig(buf, format='png', bbox_inches='tight')
                         buf.seek(0)
-                        st.image(buf, caption="Service Dependency Graph", use_container_width=True)
+                        st.image(buf, caption="Service Dependency Graph", width=None)
 
                         # Display legend
                         st.markdown("""
@@ -714,7 +714,7 @@ def main():
                             )
 
                             # Display graph
-                            st.image(plot_image, caption="Service Dependency Graph", use_container_width=True)
+                            st.image(plot_image, caption="Service Dependency Graph", width=None)
 
                             # Display legend
                             st.markdown("""

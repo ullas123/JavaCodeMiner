@@ -10,5 +10,13 @@ secondaryBackgroundColor = "#D1D5DB"
 textColor = "#121212"
 font = "sans serif"
 
-[theme.components]
-button = "#B8860B"
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true
+
+[runner]
+magicEnabled = true
+fastReruns = true
