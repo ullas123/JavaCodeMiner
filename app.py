@@ -79,7 +79,7 @@ def main():
         # Add refresh button at the top of the sidebar
         if st.button("🔄 Refresh App"):
             clear_session_state()
-            st.experimental_rerun()
+            st.rerun()
 
         st.header("Upload Project")
         # Update file uploader to handle Java files
@@ -895,41 +895,41 @@ def display_project_structure(project_structure):
         )
 
         if selected_file:
-            # Findfile = next((f for f in files if isinstance(f, dict) and f.get('path') == selected_file), None)
+            file = next((f for f in files if f['path'] == selected_file), None)
             if file:
-                # Display classes in the selected file
+                #                # Display classes in the selected file
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
 
                 # Handle class information display
                 if hasattr(file, 'classes'):
-                    for class_info in file.classes:
-                        class_name = class_info.name if hasattr(class_info, 'name') else 'Unknown Class'
+                    for class_info in file['classes']:
+                        class_name = class_info['name'] if 'name' in class_info else 'Unknown Class'
                         with st.expander(f"📚 {class_name}"):
                             # Class inheritance
-                            if hasattr(class_info, 'extends') and class_info.extends:
-                                st.markdown(f"*Extends:* `{class_info.extends}`")
-                            if hasattr(class_info, 'implements') and class_info.implements:
-                                st.markdown(f"*Implements:* `{', '.join(class_info.implements)}`")
+                            if 'extends' in class_info and class_info['extends']:
+                                st.markdown(f"*Extends:* `{class_info['extends']}`")
+                            if 'implements' in class_info and class_info['implements']:
+                                st.markdown(f"*Implements:* `{', '.join(class_info['implements'])}`")
 
                             # Methods
                             st.markdown("**Methods:**")
-                            if hasattr(class_info, 'methods'):
-                                for method in class_info.methods:
+                            if 'methods' in class_info:
+                                for method in class_info['methods']:
                                     if isinstance(method, str):
                                         st.markdown(f"- {method}")
                                     else:
-                                        method_name = method.name if hasattr(method, 'name') else 'Unknown Method'
+                                        method_name = method['name'] if 'name' in method else 'Unknown Method'
                                         st.markdown(f"- {method_name}")
 
                             # Fields
                             st.markdown("**Fields:**")
-                            if hasattr(class_info, 'fields'):
-                                for field in class_info.fields:
+                            if 'fields' in class_info:
+                                for field in class_info['fields']:
                                     if isinstance(field, str):
                                         st.markdown(f"- {field}")
                                     else:
-                                        field_name = field.name if hasattr(field, 'name') else 'Unknown Field'
-                                        field_type = field.type if hasattr(field, 'type') else 'Unknown Type'
+                                        field_name = field['name'] if 'name' in field else 'Unknown Field'
+                                        field_type = field['type'] if 'type' in field else 'Unknown Type'
                                         st.markdown(f"- {field_name}: {field_type}")
                 else:
                     st.warning("No class information available for this file")
@@ -975,10 +975,10 @@ def generate_project_uml(java_files):
         st.markdown(create_download_link(uml_code, "project_class_diagram.puml"), unsafe_allow_html=True)
 
 def display_class_details(class_info):
-    if class_info['extends']:
+    if 'extends' in class_info and class_info['extends']:
         st.markdown(f"**Extends:** {class_info['extends']}")
 
-    if class_info['implements']:
+    if 'implements' in class_info and class_info['implements']:
         st.markdown(f"**Implements:**")
         for interface in class_info['implements']:
             st.markdown(f"- {interface}")
@@ -1156,15 +1156,15 @@ def display_diagrams_summary(java_files):
     col1, col2, col3 =st.columns(3)
     with col1:
         total_relationships = sum(1 for file in java_files for class_info in file.classes 
-                               if class_info['extends'] or class_info['implements'])
+                               if 'extends' in class_info and class_info['extends'] or 'implements' in class_info and class_info['implements'])
         st.metric("Class Relationships", total_relationships)
     with col2:
         inheritance_count = sum(1 for file in java_files for class_info in file.classes 
-                              if class_info['extends'])
+                              if 'extends' in class_info and class_info['extends'])
         st.metric("Inheritance Links", inheritance_count)
     with col3:
         interface_count = sum(1 for file in java_files for class_info in file.classes 
-                            if class_info['implements'])
+                            if 'implements' in class_info and class_info['implements'])
         st.metric("Interface Implementations", interface_count)
 
 def display_legacysummary(legacy_analyzer):
@@ -1208,7 +1208,7 @@ def display_integration_summary(ms_analyzer):
 
     with col3:
         total_controllers = sum(
-            len([ep for ep in endpoints if ep['handler']])
+            len([ep for ep in endpoints if 'handler' in ep and ep['handler']])
             for endpoints in api_summary.values()
         )
         st.metric("Total Controllers", total_controllers)
