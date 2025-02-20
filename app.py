@@ -898,15 +898,42 @@ def display_project_structure(project_structure):
             if file:
                 # Display classes in the selected file
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
-                for class_info in file.get('classes', []):
-                    with st.expander(f"📚 {class_info.get('name', 'Unknown Class')}"):
-                        st.markdown("**Methods:**")
-                        for method in class_info.get('methods', []):
-                            st.markdown(f"- {method.get('name', 'Unknown Method')}")
 
-                        st.markdown("**Fields:**")
-                        for field in class_info.get('fields', []):
-                            st.markdown(f"- {field.get('name', 'Unknown Field')}: {field.get('type', 'Unknown Type')}")
+                # Handle class information display
+                if isinstance(file, dict) and 'classes' in file:
+                    for class_info in file['classes']:
+                        if isinstance(class_info, dict):
+                            class_name = class_info.get('name', 'Unknown Class')
+                            with st.expander(f"📚 {class_name}"):
+                                # Class inheritance
+                                if class_info.get('extends'):
+                                    st.markdown(f"*Extends:* `{class_info['extends']}`")
+                                if class_info.get('implements'):
+                                    st.markdown(f"*Implements:* `{', '.join(class_info['implements'])}`")
+
+                                # Methods
+                                st.markdown("**Methods:**")
+                                methods = class_info.get('methods', [])
+                                if isinstance(methods, list):
+                                    for method in methods:
+                                        if isinstance(method, str):
+                                            st.markdown(f"- {method}")
+                                        elif isinstance(method, dict):
+                                            st.markdown(f"- {method.get('name', 'Unknown Method')}")
+
+                                # Fields
+                                st.markdown("**Fields:**")
+                                fields = class_info.get('fields', [])
+                                if isinstance(fields, list):
+                                    for field in fields:
+                                        if isinstance(field, str):
+                                            st.markdown(f"- {field}")
+                                        elif isinstance(field, dict):
+                                            field_name = field.get('name', 'Unknown Field')
+                                            field_type = field.get('type', 'Unknown Type')
+                                            st.markdown(f"- {field_name}: {field_type}")
+                else:
+                    st.warning("No class information available for this file")
 
 def display_code_structure(project_structure):
     st.subheader("Code Structure Analysis")
