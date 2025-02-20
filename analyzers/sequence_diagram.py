@@ -1,13 +1,26 @@
 import javalang
 from typing import List, Dict, Tuple
-import plantuml
-import requests
+import os
+import subprocess
+import tempfile
+import logging
 
 class SequenceDiagramGenerator:
     def __init__(self):
         self.interactions = []
         self.current_class = None
-        self.plantuml = plantuml.PlantUML(url='http://www.plantuml.com/plantuml/img/')
+        # Initialize local PlantUML setup
+        self.plantuml_jar = os.path.join(os.getcwd(), "plantuml.jar")
+        if not os.path.exists(self.plantuml_jar):
+            logging.info("Downloading PlantUML jar...")
+            # Download PlantUML jar if not present
+            try:
+                subprocess.run([
+                    "curl", "-L", "-o", self.plantuml_jar,
+                    "https://github.com/plantuml/plantuml/releases/download/v1.2024.0/plantuml-1.2024.0.jar"
+                ], check=True)
+            except subprocess.CalledProcessError as e:
+                raise Exception(f"Failed to download PlantUML jar: {str(e)}")
 
     def analyze_method_calls(self, code: str, method_name: str) -> Tuple[str, bytes]:
         """Analyze method calls and generate sequence diagram."""
@@ -36,16 +49,42 @@ class SequenceDiagramGenerator:
 
             diagram_code = self._generate_sequence_diagram()
 
-            # Get diagram URL and fetch the image
+            # Generate diagram using local PlantUML
             try:
-                diagram_url = self.plantuml.get_url(diagram_code)
-                response = requests.get(diagram_url)
-                if response.status_code == 200:
-                    return diagram_code, response.content
-                else:
-                    raise Exception(f"Failed to generate diagram image: HTTP {response.status_code}")
+                # Create temporary directory for diagram files
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # Write PlantUML code to a temporary file
+                    temp_puml = os.path.join(temp_dir, "sequence_diagram.puml")
+                    temp_png = os.path.join(temp_dir, "sequence_diagram.png")
+
+                    logging.info(f"Writing PlantUML code to {temp_puml}")
+                    with open(temp_puml, "w") as f:
+                        f.write(diagram_code)
+
+                    # Generate PNG using local PlantUML jar
+                    logging.info("Running PlantUML to generate diagram")
+                    result = subprocess.run([
+                        "java", "-jar", self.plantuml_jar,
+                        "-tpng", temp_puml
+                    ], capture_output=True, text=True, check=True)
+
+                    # Check if PNG file was generated
+                    if not os.path.exists(temp_png):
+                        logging.error("PlantUML output: " + result.stdout)
+                        logging.error("PlantUML errors: " + result.stderr)
+                        raise Exception("PlantUML failed to generate the diagram")
+
+                    # Read the generated PNG file
+                    logging.info(f"Reading generated PNG from {temp_png}")
+                    with open(temp_png, "rb") as f:
+                        png_data = f.read()
+
+                    return diagram_code, png_data
+
+            except subprocess.CalledProcessError as e:
+                raise Exception(f"Failed to run PlantUML: {str(e)}\nOutput: {e.output}")
             except Exception as e:
-                raise Exception(f"PlantUML diagram generation failed: {str(e)}")
+                raise Exception(f"Failed to generate diagram: {str(e)}")
 
         except javalang.parser.JavaSyntaxError as e:
             raise Exception(f"Java syntax error: {str(e)}")
