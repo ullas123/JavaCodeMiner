@@ -1,11 +1,19 @@
-import plantuml
+import os
 from typing import List, Tuple
 from .java_class import JavaClass
-import requests
+import subprocess
+import base64
 
 class UMLGenerator:
     def __init__(self):
-        self.plantuml = plantuml.PlantUML(url='http://www.plantuml.com/plantuml/img/')
+        # Initialize local PlantUML setup
+        self.plantuml_jar = "plantuml.jar"  # PlantUML jar will be in the project root
+        if not os.path.exists(self.plantuml_jar):
+            # Download PlantUML jar if not present
+            subprocess.run([
+                "curl", "-L", "-o", self.plantuml_jar,
+                "https://github.com/plantuml/plantuml/releases/download/v1.2024.0/plantuml-1.2024.0.jar"
+            ])
 
     def generate_class_diagram(self, classes: List[JavaClass]) -> Tuple[str, bytes]:
         """Generate class diagram and return both PlantUML code and PNG image"""
@@ -94,13 +102,28 @@ class UMLGenerator:
         uml_code.append("@enduml")
         diagram_code = "\n".join(uml_code)
 
-        # Get diagram URL and fetch the image
+        # Generate diagram using local PlantUML
         try:
-            diagram_url = self.plantuml.get_url(diagram_code)
-            response = requests.get(diagram_url)
-            if response.status_code == 200:
-                return diagram_code, response.content
-            else:
-                raise Exception(f"Failed to generate diagram image: HTTP {response.status_code}")
+            # Write PlantUML code to a temporary file
+            temp_puml = "temp_diagram.puml"
+            with open(temp_puml, "w") as f:
+                f.write(diagram_code)
+
+            # Generate PNG using local PlantUML jar
+            subprocess.run([
+                "java", "-jar", self.plantuml_jar,
+                "-tpng", temp_puml
+            ])
+
+            # Read the generated PNG file
+            png_file = "temp_diagram.png"
+            with open(png_file, "rb") as f:
+                png_data = f.read()
+
+            # Clean up temporary files
+            os.remove(temp_puml)
+            os.remove(png_file)
+
+            return diagram_code, png_data
         except Exception as e:
             raise Exception(f"Failed to generate diagram: {str(e)}")
