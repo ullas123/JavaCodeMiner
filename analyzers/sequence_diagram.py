@@ -9,8 +9,8 @@ class SequenceDiagramGenerator:
     def __init__(self):
         self.interactions = []
         self.current_class = None
-        # PlantUML is installed as a system dependency
-        self.plantuml_cmd = "plantuml"
+        # Full path to PlantUML executable
+        self.plantuml_cmd = "/nix/store/mpzhxv8sgnpp9v1zgljz64bviyqc39jj-plantuml-1.2024.4/bin/plantuml"
 
     def analyze_method_calls(self, code: str, method_name: str) -> Tuple[str, bytes]:
         """Analyze method calls and generate sequence diagram."""
