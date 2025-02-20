@@ -97,9 +97,7 @@ def main():
                 <span style='font-size: 14px;'>Design & Development</span>
             </div>
             <div style='background-color: white; padding: 10px; border: 1px solid #28a745; border-radius: 0 0 5px 5px;'>
-                <p style='margin: 0; text-align: center; color: #333;'><strong>Java Code Analysis Team</strong></p>
-                <p style='margin: 5px 0; text-align: center; color: #666;'>Technical Architect</p>
-                <p style='margin: 0; text-align: center; color: #666;'>Development Team</p>
+                <p style='margin: 0; text-align: center; color: #666;'>Zensar Diamond Team</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -894,10 +892,10 @@ def display_project_structure(project_structure):
 
         if selected_file:
             # Find the selected file
-            file = next((f for f in files if isinstance(f, dict) and f.get('path') == selected_file), None)
+            file = next((f for f in files if isinstance(f, dict) and f.get('path') ==selected_file), None)
             if file:
                 # Display classes in the selected file
-                st.markdown(f"### Classes in {os.path.basename(selected_file)}")
+                st.markdown(f"### Classesin {os.path.basename(selected_file)}")
 
                 # Handle class information display
                 if hasattr(file, 'classes'):
