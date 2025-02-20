@@ -74,9 +74,9 @@ def main():
 
     # File uploader in the sidebar
     with st.sidebar:
-        st.header("CodeMXJ Controls")
+        st.header("Explore Java Code ☕")
 
-        # Add refresh button at the top of sidebar
+        # Add refresh button at the top of the sidebar
         if st.button("🔄 Refresh App"):
             clear_session_state()
             st.rerun()
@@ -895,7 +895,7 @@ def display_project_structure(project_structure):
             file = next((f for f in files if isinstance(f, dict) and f.get('path') ==selected_file), None)
             if file:
                 # Display classes in the selected file
-                st.markdown(f"### Classesin {os.path.basename(selected_file)}")
+                st.markdown(f"### Classes in {os.path.basename(selected_file)}")
 
                 # Handle class information display
                 if hasattr(file, 'classes'):
@@ -993,7 +993,7 @@ def generate_sequence_diagram(project_path):
 
     generator = SequenceDiagramGenerator()
 
-    method_name = st.text_input("Enter method name toanalyze:")
+    method_name = st.text_input("Enter method name to analyze:")
     if method_name: # Corrected variable name
         with st.spinner('Generating sequence diagram...'):
             sequence_diagram = generator.analyze_method_calls(project_path, method_name)
@@ -1105,7 +1105,7 @@ def analyze_database_schema(java_files, project_path):
             "DELETE": []
         }
 
-        # Analyze allfiles for SQL queries
+        # Analyze all files for SQL queries
         for file in java_files:
             file_path = os.path.join(project_path, file.path)
             try:
