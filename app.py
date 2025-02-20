@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import os
 import tempfile
-import pandas as pd # Added import for pandas
+import pandas as pd
 from zipfile import ZipFile
 from analyzers.code_parser import JavaCodeParser
 from analyzers.uml_generator import UMLGenerator
@@ -11,11 +11,11 @@ from analyzers.sequence_diagram import SequenceDiagramGenerator
 from analyzers.call_graph import CallGraphAnalyzer
 from analyzers.project_analyzer import ProjectAnalyzer
 from utils.helpers import display_code_with_syntax_highlighting, create_download_link, show_progress_bar, handle_error
-from analyzers.java_class import JavaClass # Added import statement
+from analyzers.java_class import JavaClass
 import base64
 from io import BytesIO
 from analyzers.microservice_analyzer import MicroserviceAnalyzer
-from analyzers.legacy_table_analyzer import LegacyTableAnalyzer # Add to imports at the top
+from analyzers.legacy_table_analyzer import LegacyTableAnalyzer
 from analyzers.demographics_analyzer import DemographicsAnalyzer
 from analyzers.integration_pattern_analyzer import IntegrationPatternAnalyzer
 from analyzers.demographic_pattern_analyzer import DemographicPatternAnalyzer
@@ -28,10 +28,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def clear_session_state():
-    """Clear all session state variables"""
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
 
 def extract_project(uploaded_file):
     """Extract uploaded zip file to temporary directory"""
@@ -60,13 +56,14 @@ def extract_project(uploaded_file):
                     zip_ref.extract(file_info, temp_dir)
 
         st.session_state.project_files = [
-            f for f in os.listdir(temp_dir) 
+            f for f in os.listdir(temp_dir)
             if f.endswith('.java') and os.path.isfile(os.path.join(temp_dir, f))
         ]
         return temp_dir
     except Exception as e:
         st.error(f"Error extracting project: {str(e)}")
         return None
+
 
 def main():
     st.title("CodeMXJ")
@@ -75,11 +72,6 @@ def main():
     # File uploader in the sidebar
     with st.sidebar:
         st.header("Explore Java Code ☕")
-
-        # Add refresh button at the top of the sidebar
-        if st.button("🔄 Refresh App"):
-            clear_session_state()
-            st.rerun()
 
         st.header("Upload Project")
         # Update file uploader to handle Java files
@@ -104,7 +96,7 @@ def main():
 
     # Create tabs for different analysis views in main content area
     structure_tab, diagrams_tab, patterns_tab, demographics_tab, services_tab, api_details_tab, legacy_api_tab, db_tab, analysis_tab = st.tabs([
-        "Code Structure", "Diagrams", "Integration Patterns", "Demographics", 
+        "Code Structure", "Diagrams", "Integration Patterns", "Demographics",
         "Service Graph", "API Details", "Legacy API Analysis", "Database", "Analysis Summary"
     ])
 
@@ -156,9 +148,6 @@ def main():
                     display_project_structure(project_structure) # Use the new function here
 
                 st.divider()
-
-                # Display Project Structure using the new function
-                #display_project_structure(project_structure)
 
 
             # Diagrams Tab
@@ -498,7 +487,7 @@ def main():
                         pos = graph_data['positions']
 
                         # Draw nodes with different colors for different service types
-                        nx.draw_networkx_nodes(graph, pos, 
+                        nx.draw_networkx_nodes(graph, pos,
                                                     node_color='lightblue',
                                                     node_size=2000)
 
@@ -557,7 +546,7 @@ def main():
                                         ### {api['method']} {api['path']}
                                         **Handler:** `{api['class']}.{api['handler']}`
 
-                                        **Client Type:** {api['client_type']}  
+                                        **Client Type:** {api['client_type']}
                                         (RestTemplate/FeignClient/Direct Controller)
 
                                         **Request Parameters:**
@@ -657,15 +646,15 @@ def main():
                             with st.expander(f"Service: {service}", expanded=True):
                                 for endpoint in endpoints:
                                     st.markdown(f"""
-                                    **{endpoint['method']} {endpoint['path']}**  
+                                    **{endpoint['method']} {endpoint['path']}**
                                     Handler: `{endpoint['class']}.{endpoint['handler']}`
                                     """)
 
                     elif analysis_type == "Service Dependencies":
                         for dep in ms_analyzer.service_dependencies:
                             st.markdown(f"""
-                            **{dep.source}** → **{dep.target}**  
-                            Type: {dep.type}  
+                            **{dep.source}** → **{dep.target}**
+                            Type: {dep.type}
                             Details: {dep.details}
                             """)
 
@@ -678,7 +667,7 @@ def main():
                             pos = graph_data['positions']
 
                             # Draw nodes
-                            nx.draw_networkx_nodes(graph, pos, 
+                            nx.draw_networkx_nodes(graph, pos,
                                                         node_color='lightblue',
                                                         node_size=2000)
 
@@ -807,6 +796,7 @@ def main():
     else:
         st.info("Please upload a Java project (ZIP file) to begin analysis")
 
+
 def display_project_structure(project_structure):
     st.subheader("Project Structure")
 
@@ -890,7 +880,7 @@ def display_project_structure(project_structure):
         # File selection
         file_paths = [file['path'] for file in files]
         selected_file = st.selectbox(
-            "Select a file to view details", 
+            "Select a file to view details",
             sorted(file_paths)
         )
 
@@ -934,6 +924,7 @@ def display_project_structure(project_structure):
                 else:
                     st.warning("No class information available for this file")
 
+
 def display_code_structure(project_structure):
     st.subheader("Code Structure Analysis")
 
@@ -953,6 +944,7 @@ def display_code_structure(project_structure):
                 for class_info in file['classes']:
                     st.markdown(f"### Class: {class_info['name']}")
                     display_class_details(class_info)
+
 
 def generate_project_uml(java_files):
     st.subheader("Project UML Class Diagram")
@@ -974,6 +966,7 @@ def generate_project_uml(java_files):
         st.text_area("PlantUML Code", uml_code, height=300)
         st.markdown(create_download_link(uml_code, "project_class_diagram.puml"), unsafe_allow_html=True)
 
+
 def display_class_details(class_info):
     if 'extends' in class_info and class_info['extends']:
         st.markdown(f"**Extends:** {class_info['extends']}")
@@ -991,6 +984,7 @@ def display_class_details(class_info):
     for method in class_info['methods']:
         st.markdown(f"- {method}")
 
+
 def generate_sequence_diagram(project_path):
     st.subheader("Sequence Diagram Generator")
 
@@ -1002,6 +996,7 @@ def generate_sequence_diagram(project_path):
             sequence_diagram = generator.analyze_method_calls(project_path, method_name)
             st.text_area("PlantUML Sequence Diagram", sequence_diagram, height=300)
             st.markdown(create_download_link(sequence_diagram, "sequence_diagram.puml"), unsafe_allow_html=True)
+
 
 def generate_call_graph(project_path):
     st.subheader("Function Call Graph")
@@ -1024,6 +1019,7 @@ def generate_call_graph(project_path):
             ax=ax
         )
         st.pyplot(fig)
+
 
 def analyze_database_schema(java_files, project_path):
     st.subheader("Legacy Database Analysis")
@@ -1138,34 +1134,37 @@ def analyze_database_schema(java_files, project_path):
                 else:
                     st.info(f"No {query_type} queries found")
 
+
 def display_code_structure_summary(project_structure):
     col1,col2, col3 = st.columns(3)
     with col1:
         total_classes = sum(len(file['classes']) for files in project_structure.values() for file in files)
         st.metric("Total Classes", total_classes)
     with col2:
-        total_methods = sum(len(class_info['methods']) for files in project_structure.values() 
+        total_methods = sum(len(class_info['methods']) for files in project_structure.values()
                             for file in files for class_info in file['classes'])
         st.metric("Total Methods", total_methods)
     with col3:
-        total_fields = sum(len(class_info['fields']) for files in project_structure.values() 
+        total_fields = sum(len(class_info['fields']) for files in project_structure.values()
                             for file in files for class_info in file['classes'])
         st.metric("Total Fields", total_fields)
+
 
 def display_diagrams_summary(java_files):
     col1, col2, col3 =st.columns(3)
     with col1:
-        total_relationships = sum(1 for file in java_files for class_info in file.classes 
+        total_relationships = sum(1 for file in java_files for class_info in file.classes
                                if 'extends' in class_info and class_info['extends'] or 'implements' in class_info and class_info['implements'])
         st.metric("Class Relationships", total_relationships)
     with col2:
-        inheritance_count = sum(1 for file in java_files for class_info in file.classes 
+        inheritance_count = sum(1 for file in java_files for class_info in file.classes
                               if 'extends' in class_info and class_info['extends'])
         st.metric("Inheritance Links", inheritance_count)
     with col3:
-        interface_count = sum(1 for file in java_files for class_info in file.classes 
+        interface_count = sum(1 for file in java_files for class_info in file.classes
                             if 'implements' in class_info and class_info['implements'])
         st.metric("Interface Implementations", interface_count)
+
 
 def display_legacysummary(legacy_analyzer):
     usage_summary = legacy_analyzer.get_usage_summary()
@@ -1180,6 +1179,7 @@ def display_legacysummary(legacy_analyzer):
         total_usages = sum(len(usage) for usage in usage_summary.values())
         st.metric("Total References", total_usages)
 
+
 def display_demographics_summary(demo_analyzer):
     usage_summary = demo_analyzer.get_usage_summary()
     col1, col2, col3 = st.columns(3)
@@ -1192,6 +1192,7 @@ def display_demographics_summary(demo_analyzer):
     with col3:
         total_usages = sum(len(usage) for usage in usage_summary.values())
         st.metric("Total References", total_usages)
+
 
 def display_integration_summary(ms_analyzer):
     """Display integration summary in a table format"""
@@ -1212,6 +1213,7 @@ def display_integration_summary(ms_analyzer):
             for endpoints in api_summary.values()
         )
         st.metric("Total Controllers", total_controllers)
+
 
 if __name__ == "__main__":
     main()
