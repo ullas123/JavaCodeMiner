@@ -7,8 +7,40 @@ import logging
 
 class UMLGenerator:
     def __init__(self):
-        # Full path to PlantUML executable
-        self.plantuml_cmd = "/nix/store/mpzhxv8sgnpp9v1zgljz64bviyqc39jj-plantuml-1.2024.4/bin/plantuml"
+        # Try to find PlantUML executable in common locations
+        self.plantuml_cmd = self._find_plantuml_executable()
+        if not self.plantuml_cmd:
+            raise Exception("PlantUML not found. Please install PlantUML and ensure it's in your system PATH")
+
+    def _find_plantuml_executable(self) -> str:
+        """Find PlantUML executable in common installation locations"""
+        # Check if PLANTUML_PATH environment variable is set
+        if os.environ.get('PLANTUML_PATH'):
+            return os.environ['PLANTUML_PATH']
+
+        # Common locations for PlantUML
+        possible_locations = [
+            "plantuml",  # If in PATH
+            "/usr/local/bin/plantuml",
+            "/usr/bin/plantuml",
+            "/opt/homebrew/bin/plantuml",  # macOS Homebrew
+            "C:\\Program Files\\PlantUML\\plantuml.jar",  # Windows
+            "/nix/store/mpzhxv8sgnpp9v1zgljz64bviyqc39jj-plantuml-1.2024.4/bin/plantuml"  # Replit Nix
+        ]
+
+        # Try each location
+        for location in possible_locations:
+            try:
+                # Test if the command works
+                subprocess.run([location, "-version"], 
+                             capture_output=True, 
+                             text=True, 
+                             check=True)
+                return location
+            except (subprocess.SubprocessError, FileNotFoundError):
+                continue
+
+        return None
 
     def generate_class_diagram(self, classes: List[JavaClass]) -> Tuple[str, bytes]:
         """Generate class diagram and return both PlantUML code and PNG image"""

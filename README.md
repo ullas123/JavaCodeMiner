@@ -1,49 +1,82 @@
-git clone [repository-url]
-   cd codemxj
-   ```
-
 2. **Create and Activate Python Environment** (Recommended)
-   ```bash
-   # Create virtual environment
-   python -m venv venv
+  ```bash
+  # Create virtual environment
+  python -m venv venv
 
-   # Activate on Windows
-   .\venv\Scripts\activate
+  # Activate on Windows
+  .\venv\Scripts\activate
 
-   # Activate on Unix/MacOS
-   source venv/bin/activate
-   ```
+  # Activate on Unix/MacOS
+  source venv/bin/activate
+  ```
 
 3. **Install Required Packages**
-   ```bash
-   pip install -r requirements.txt
-   ```
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-   Required packages and versions:
-   - streamlit (1.24.0+) - Web interface framework
-   - javalang (0.13.0+) - Java source code parser
-   - networkx (3.1+) - Graph analysis and visualization
-   - matplotlib (3.7+) - Plotting and visualization
-   - pandas (2.0+) - Data manipulation
-   - plantuml (0.3.0+) - UML diagram generation
-   - plantuml-markdown - Documentation support
+  Required packages and versions:
+  - streamlit (1.24.0+) - Web interface framework
+  - javalang (0.13.0+) - Java source code parser
+  - networkx (3.1+) - Graph analysis and visualization
+  - matplotlib (3.7+) - Plotting and visualization
+  - pandas (2.0+) - Data manipulation
+  - plantuml (0.3.0+) - UML diagram generation
+  - plantuml-markdown - Documentation support
+
+### PlantUML Installation
+
+For local development, you need to install PlantUML:
+
+#### macOS
+```bash
+# Using Homebrew
+brew install plantuml
+
+# Verify installation
+plantuml -version
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install plantuml
+
+# Verify installation
+plantuml -version
+```
+
+#### Windows
+1. Download PlantUML jar from https://plantuml.com/download
+2. Install Java if not already installed
+3. Add PlantUML to your system PATH or set PLANTUML_PATH environment variable
+
+#### Environment Variable (Optional)
+You can set the PLANTUML_PATH environment variable to specify your PlantUML installation:
+```bash
+# Unix/macOS
+export PLANTUML_PATH=/path/to/plantuml
+
+# Windows (PowerShell)
+$env:PLANTUML_PATH = "C:\Path\To\plantuml.jar"
+```
 
 4. **Verify Installation**
-   ```bash
-   python -c "import streamlit; import javalang; import networkx; import matplotlib; import pandas"
-   ```
+  ```bash
+  python -c "import streamlit; import javalang; import networkx; import matplotlib; import pandas"
+  ```
 
 ### Running the Application
 
 1. **Start the Application**
-   ```bash
-   streamlit run app.py
-   ```
+  ```bash
+  streamlit run app.py
+  ```
 
 2. **Access the Web Interface**
-   - Open your web browser
-   - Navigate to `http://localhost:5000`
-   - The application will automatically reload on code changes
+  - Open your web browser
+  - Navigate to `http://localhost:5000`
+  - The application will automatically reload on code changes
 
 ### Usage Instructions
 
@@ -66,18 +99,18 @@ git clone [repository-url]
 ### Troubleshooting
 
 1. **Package Installation Issues**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt --no-cache-dir
-   ```
+  ```bash
+  pip install --upgrade pip
+  pip install -r requirements.txt --no-cache-dir
+  ```
 
 2. **Java-Related Errors**
-   - Verify Java installation: `java -version`
-   - Check JAVA_HOME environment variable
-   - Ensure Java binary is in system PATH
+  - Verify Java installation: `java -version`
+  - Check JAVA_HOME environment variable
+  - Ensure Java binary is in system PATH
 
 3. **Port Conflicts**
-   - Default port is 5000
-   - To use a different port:
-     ```bash
-     streamlit run app.py --server.port [YOUR_PORT]
+  - Default port is 5000
+  - To use a different port:
+    ```bash
+    streamlit run app.py --server.port [YOUR_PORT]
