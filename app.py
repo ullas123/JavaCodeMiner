@@ -732,15 +732,28 @@ def main():
                 with patterns_col:
                     st.markdown("### Design Patterns")
                     patterns = pattern_analyzer.get_patterns()
+                    data = []
                     if patterns:
                         for pattern in patterns:
-                            st.markdown(f"""
-                            **{pattern['name']}**
-                            - Type: {pattern['type']}
-                            - Usage: {pattern['usage_count']} occurrences
-                            """)
+                            # Check if pattern is a dictionary before accessing keys
+                            if isinstance(pattern, dict):
+                                pattern_name = pattern.get('name', 'Unknown')
+                                pattern_type = pattern.get('type', 'Unknown')
+                                usage_count = pattern.get('usage_count', 0)
+                                data.append({
+                                    'Pattern Name': pattern_name,
+                                    'Type': pattern_type,
+                                    'Usage Count': usage_count
+                                })
+                            else:
+                                st.warning(f"Invalid pattern data format: {pattern}")
+
+                    if data:
+                        df = pd.DataFrame(data)
+                        st.dataframe(df)
                     else:
                         st.info("No specific patterns detected")
+
 
                 with demographics_col:
                     st.markdown("### Demographic Data Usage")
@@ -760,13 +773,25 @@ def main():
                 with integration_col:
                     st.markdown("### Integration Patterns")
                     int_patterns = int_analyzer.get_patterns()
+                    data = []
                     if int_patterns:
                         for pattern in int_patterns:
-                            st.markdown(f"""
-                            **{pattern['name']}**
-                            - Type: {pattern['type']}
-                            - Components: {pattern['components']}
-                            """)
+                            # Check if pattern is a dictionary before accessing keys
+                            if isinstance(pattern, dict):
+                                pattern_name = pattern.get('name', 'Unknown')
+                                pattern_type = pattern.get('type', 'Unknown')
+                                components = pattern.get('components', [])
+                                data.append({
+                                    'Pattern Name': pattern_name,
+                                    'Type': pattern_type,
+                                    'Components': ', '.join(components) if isinstance(components, list) else str(components)
+                                })
+                            else:
+                                st.warning(f"Invalid pattern data format: {pattern}")
+
+                    if data:
+                        df = pd.DataFrame(data)
+                        st.dataframe(df)
                     else:
                         st.info("No integration patterns detected")
 
