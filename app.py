@@ -79,7 +79,7 @@ def main():
         # Add refresh button at the top of the sidebar
         if st.button("🔄 Refresh App"):
             clear_session_state()
-            st.rerun()
+            st.experimental_rerun()
 
         st.header("Upload Project")
         # Update file uploader to handle Java files
@@ -888,16 +888,14 @@ def display_project_structure(project_structure):
         files = project_structure[selected_package]
 
         # File selection
-        file_options = [file['path'] for file in files]
+        file_paths = [file['path'] for file in files]
         selected_file = st.selectbox(
-            "Select File",
-            options=file_options,
-            key="file_selector"
+            "Select a file to view details", 
+            sorted(file_paths)
         )
 
         if selected_file:
-            # Find the selected file
-            file = next((f for f in files if isinstance(f, dict) and f.get('path') ==selected_file), None)
+            # Findfile = next((f for f in files if isinstance(f, dict) and f.get('path') == selected_file), None)
             if file:
                 # Display classes in the selected file
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
