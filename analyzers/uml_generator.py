@@ -2,24 +2,13 @@ import os
 from typing import List, Tuple
 from .java_class import JavaClass
 import subprocess
-import base64
 import tempfile
 import logging
 
 class UMLGenerator:
     def __init__(self):
-        # Initialize local PlantUML setup
-        self.plantuml_jar = os.path.join(os.getcwd(), "plantuml.jar")
-        if not os.path.exists(self.plantuml_jar):
-            logging.info("Downloading PlantUML jar...")
-            # Download PlantUML jar if not present
-            try:
-                subprocess.run([
-                    "curl", "-L", "-o", self.plantuml_jar,
-                    "https://github.com/plantuml/plantuml/releases/download/v1.2024.0/plantuml-1.2024.0.jar"
-                ], check=True)
-            except subprocess.CalledProcessError as e:
-                raise Exception(f"Failed to download PlantUML jar: {str(e)}")
+        # PlantUML is installed as a system dependency
+        self.plantuml_cmd = "plantuml"
 
     def generate_class_diagram(self, classes: List[JavaClass]) -> Tuple[str, bytes]:
         """Generate class diagram and return both PlantUML code and PNG image"""
@@ -85,12 +74,6 @@ class UMLGenerator:
 
                 uml_code.append("}")
 
-                # Add class notes if available
-                if hasattr(java_class, 'description') and java_class.description:
-                    uml_code.append(f"note right of {java_class.name}")
-                    uml_code.append(f"  {java_class.description}")
-                    uml_code.append("end note")
-
             if package != 'default':
                 uml_code.append("}")
 
@@ -120,12 +103,14 @@ class UMLGenerator:
                 with open(temp_puml, "w") as f:
                     f.write(diagram_code)
 
-                # Generate PNG using local PlantUML jar
+                # Generate PNG using local PlantUML command
                 logging.info("Running PlantUML to generate diagram")
-                result = subprocess.run([
-                    "java", "-jar", self.plantuml_jar,
-                    "-tpng", temp_puml
-                ], capture_output=True, text=True, check=True)
+                result = subprocess.run(
+                    [self.plantuml_cmd, "-tpng", temp_puml],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
 
                 # Check if PNG file was generated
                 if not os.path.exists(temp_png):

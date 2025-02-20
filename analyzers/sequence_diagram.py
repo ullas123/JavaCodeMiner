@@ -9,18 +9,8 @@ class SequenceDiagramGenerator:
     def __init__(self):
         self.interactions = []
         self.current_class = None
-        # Initialize local PlantUML setup
-        self.plantuml_jar = os.path.join(os.getcwd(), "plantuml.jar")
-        if not os.path.exists(self.plantuml_jar):
-            logging.info("Downloading PlantUML jar...")
-            # Download PlantUML jar if not present
-            try:
-                subprocess.run([
-                    "curl", "-L", "-o", self.plantuml_jar,
-                    "https://github.com/plantuml/plantuml/releases/download/v1.2024.0/plantuml-1.2024.0.jar"
-                ], check=True)
-            except subprocess.CalledProcessError as e:
-                raise Exception(f"Failed to download PlantUML jar: {str(e)}")
+        # PlantUML is installed as a system dependency
+        self.plantuml_cmd = "plantuml"
 
     def analyze_method_calls(self, code: str, method_name: str) -> Tuple[str, bytes]:
         """Analyze method calls and generate sequence diagram."""
@@ -61,12 +51,14 @@ class SequenceDiagramGenerator:
                     with open(temp_puml, "w") as f:
                         f.write(diagram_code)
 
-                    # Generate PNG using local PlantUML jar
+                    # Generate PNG using local PlantUML command
                     logging.info("Running PlantUML to generate diagram")
-                    result = subprocess.run([
-                        "java", "-jar", self.plantuml_jar,
-                        "-tpng", temp_puml
-                    ], capture_output=True, text=True, check=True)
+                    result = subprocess.run(
+                        [self.plantuml_cmd, "-tpng", temp_puml],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
 
                     # Check if PNG file was generated
                     if not os.path.exists(temp_png):

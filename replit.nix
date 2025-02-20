@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.plantuml
     pkgs.jdk
     pkgs.xdg-utils
     pkgs.freefont_ttf
