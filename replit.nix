@@ -1,5 +1,7 @@
 {pkgs}: {
   deps = [
+    pkgs.openjdk
+    pkgs.graphviz
     pkgs.plantuml
     pkgs.jdk
     pkgs.xdg-utils
