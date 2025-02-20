@@ -97,9 +97,9 @@ def main():
                 <span style='font-size: 14px;'>Design & Development</span>
             </div>
             <div style='background-color: white; padding: 10px; border: 1px solid #28a745; border-radius: 0 0 5px 5px;'>
-                <p style='margin: 0; text-align: center; color: #333;'><strong>Ullas Krishnan</strong></p>
-                <p style='margin: 5px 0; text-align: center; color: #666;'>Sr Solution Architect</p>
-                <p style='margin: 0; text-align: center; color: #666;'>Zensar Diamond Team</p>
+                <p style='margin: 0; text-align: center; color: #333;'><strong>Java Code Analysis Team</strong></p>
+                <p style='margin: 5px 0; text-align: center; color: #666;'>Technical Architect</p>
+                <p style='margin: 0; text-align: center; color: #666;'>Development Team</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -900,38 +900,36 @@ def display_project_structure(project_structure):
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
 
                 # Handle class information display
-                if isinstance(file, dict) and 'classes' in file:
-                    for class_info in file['classes']:
-                        if isinstance(class_info, dict):
-                            class_name = class_info.get('name', 'Unknown Class')
-                            with st.expander(f"📚 {class_name}"):
-                                # Class inheritance
-                                if class_info.get('extends'):
-                                    st.markdown(f"*Extends:* `{class_info['extends']}`")
-                                if class_info.get('implements'):
-                                    st.markdown(f"*Implements:* `{', '.join(class_info['implements'])}`")
+                if hasattr(file, 'classes'):
+                    for class_info in file.classes:
+                        class_name = class_info.name if hasattr(class_info, 'name') else 'Unknown Class'
+                        with st.expander(f"📚 {class_name}"):
+                            # Class inheritance
+                            if hasattr(class_info, 'extends') and class_info.extends:
+                                st.markdown(f"*Extends:* `{class_info.extends}`")
+                            if hasattr(class_info, 'implements') and class_info.implements:
+                                st.markdown(f"*Implements:* `{', '.join(class_info.implements)}`")
 
-                                # Methods
-                                st.markdown("**Methods:**")
-                                methods = class_info.get('methods', [])
-                                if isinstance(methods, list):
-                                    for method in methods:
-                                        if isinstance(method, str):
-                                            st.markdown(f"- {method}")
-                                        elif isinstance(method, dict):
-                                            st.markdown(f"- {method.get('name', 'Unknown Method')}")
+                            # Methods
+                            st.markdown("**Methods:**")
+                            if hasattr(class_info, 'methods'):
+                                for method in class_info.methods:
+                                    if isinstance(method, str):
+                                        st.markdown(f"- {method}")
+                                    else:
+                                        method_name = method.name if hasattr(method, 'name') else 'Unknown Method'
+                                        st.markdown(f"- {method_name}")
 
-                                # Fields
-                                st.markdown("**Fields:**")
-                                fields = class_info.get('fields', [])
-                                if isinstance(fields, list):
-                                    for field in fields:
-                                        if isinstance(field, str):
-                                            st.markdown(f"- {field}")
-                                        elif isinstance(field, dict):
-                                            field_name = field.get('name', 'Unknown Field')
-                                            field_type = field.get('type', 'Unknown Type')
-                                            st.markdown(f"- {field_name}: {field_type}")
+                            # Fields
+                            st.markdown("**Fields:**")
+                            if hasattr(class_info, 'fields'):
+                                for field in class_info.fields:
+                                    if isinstance(field, str):
+                                        st.markdown(f"- {field}")
+                                    else:
+                                        field_name = field.name if hasattr(field, 'name') else 'Unknown Field'
+                                        field_type = field.type if hasattr(field, 'type') else 'Unknown Type'
+                                        st.markdown(f"- {field_name}: {field_type}")
                 else:
                     st.warning("No class information available for this file")
 
