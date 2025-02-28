@@ -31,27 +31,22 @@ st.set_page_config(
 
 def extract_project(uploaded_file):
     """Extract uploaded zip file to temporary directory"""
-    # Create a temporary directory that persists during the session
     if 'temp_dir' not in st.session_state:
         st.session_state.temp_dir = tempfile.mkdtemp()
 
     temp_dir = st.session_state.temp_dir
 
-    # Clear previous contents
     for root, dirs, files in os.walk(temp_dir, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
             os.rmdir(os.path.join(root, name))
 
-    # Extract new files
     try:
         with ZipFile(uploaded_file, 'r') as zip_ref:
             for file_info in zip_ref.filelist:
-                # Skip directories
                 if file_info.filename.endswith('/'):
                     continue
-                # Only extract .java files
                 if file_info.filename.endswith('.java'):
                     zip_ref.extract(file_info, temp_dir)
 
@@ -69,19 +64,16 @@ def main():
     st.title("CodeMXJ")
     st.markdown("<p style='color: #B8860B;'>Advanced Java Code Analysis & Visualization</p>", unsafe_allow_html=True)
 
-    # File uploader in the sidebar
     with st.sidebar:
         st.header("Explore Java Code ☕")
 
         st.header("Upload Project")
-        # Update file uploader to handle Java files
         uploaded_file = st.file_uploader(
             "Upload Java Project (ZIP file containing .java files)",
             type=["zip"],
             help="Upload a ZIP file containing Java source files (.java)"
         )
 
-        # Add credits at the bottom of sidebar
         st.markdown("---")
         st.markdown("""
         <div style='width: 100%;'>
@@ -94,7 +86,6 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    # Create tabs for different analysis views in main content area
     structure_tab, diagrams_tab, patterns_tab, demographics_tab, services_tab, api_details_tab, legacy_api_tab, db_tab, analysis_tab = st.tabs([
         "Code Structure", "Diagrams", "Integration Patterns", "Demographics",
         "Service Graph", "API Details", "Legacy API Analysis", "Database", "Analysis Summary"
@@ -102,29 +93,24 @@ def main():
 
     if uploaded_file is not None:
         try:
-            # Extract and analyze project
             project_path = extract_project(uploaded_file)
 
-            # Simplified path info below upload section
             st.write("Project Info:")
             st.write("✓ Project loaded successfully")
 
-            # Initialize analyzers
             with st.spinner('Analyzing project structure...'):
                 analyzer = ProjectAnalyzer()
-                ms_analyzer = MicroserviceAnalyzer()  # Initialize here for all tabs to use
-                legacy_analyzer = LegacyTableAnalyzer() # Initialize legacy analyzer here
-                demo_analyzer = DemographicsAnalyzer() # Initialize demo analyzer here
-                int_analyzer = IntegrationPatternAnalyzer() # Initialize integration analyzer here
-                pattern_analyzer = DemographicPatternAnalyzer() # Initialize pattern analyzer here
-
+                ms_analyzer = MicroserviceAnalyzer()
+                legacy_analyzer = LegacyTableAnalyzer()
+                demo_analyzer = DemographicsAnalyzer()
+                int_analyzer = IntegrationPatternAnalyzer()
+                pattern_analyzer = DemographicPatternAnalyzer()
 
                 java_files = analyzer.analyze_project(project_path)
                 if not java_files:
                     st.warning(f"No Java files found in the uploaded project")
                     return
 
-                # Analyze all Java files for microservices and legacy tables
                 for file in java_files:
                     file_path = os.path.join(project_path, file.path)
                     service_name = file.path.split('/')[0] if '/' in file.path else 'default'
@@ -132,289 +118,26 @@ def main():
                     with open(file_path, 'r', encoding='utf-8') as f:
                         code = f.read()
                         ms_analyzer.analyze_code(code, service_name)
-                        legacy_analyzer.analyze_code(file_path, code) # Analyze for legacy tables
-                        demo_analyzer.analyze_code(file_path, code) # Analyze for demographics
-                        int_analyzer.analyze_code(file_path,code) # Analyze for integration patterns
-                        pattern_analyzer.analyze_code(file_path, code) # Analyze for design patterns
-
+                        legacy_analyzer.analyze_code(file_path, code)
+                        demo_analyzer.analyze_code(file_path, code)
+                        int_analyzer.analyze_code(file_path, code)
+                        pattern_analyzer.analyze_code(file_path, code)
 
                 project_structure = analyzer.get_project_structure(java_files)
 
-            # Project Structure (only in Code Structure tab)
             with structure_tab:
-                # Display Project Overview Tables
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    display_project_structure(project_structure) # Use the new function here
+                    display_project_structure(project_structure)
 
                 st.divider()
 
-
-            # Diagrams Tab
             with diagrams_tab:
                 display_diagrams_summary(java_files)
-                diagram_type = st.radio(
-                    "Select Diagram Type",
-                    ["UML Class Diagram", "Class Dependencies"]
-                )
 
-                if diagram_type == "UML Class Diagram":
-                    with st.spinner('Generating class diagram...'):
-                        uml_generator = UMLGenerator()
-                        all_classes = []
 
-                        for file in java_files:
-                            for class_info in file.classes:
-                                java_class = JavaClass.from_dict(class_info)
-                                all_classes.append(java_class)
-
-                        uml_code, uml_image = uml_generator.generate_class_diagram(all_classes)
-
-                        # Display diagram first for better visibility
-                        st.image(uml_image, caption="Class Diagram", width=None)
-
-                        # Add download options in a cleaner layout
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.download_button(
-                                label="📥 Download Diagram (PNG)",
-                                data=uml_image,
-                                file_name="class_diagram.png",
-                                mime="image/png",
-                                help="Download the UML diagram as a PNG image"
-                            )
-                        with col2:
-                            st.download_button(
-                                label="📄 Download PlantUML Code",
-                                data=uml_code,
-                                file_name="class_diagram.puml",
-                                mime="text/plain",
-                                help="Download the PlantUML source code"
-                            )
-
-                        # Show PlantUML code in an expandable section
-                        with st.expander("View PlantUML Code"):
-                            st.code(uml_code, language="text")
-
-                elif diagram_type == "Class Dependencies":
-                    with st.spinner('Generating class dependency graph...'):
-                        analyzer = CallGraphAnalyzer()
-
-                        # Analyze all Java files
-                        combined_code = ""
-                        for file in java_files:
-                            file_path = os.path.join(project_path, file.path)
-                            try:
-                                with open(file_path, 'r', encoding='utf-8') as f:
-                                    combined_code += f.read() + "\n"
-                            except Exception as e:
-                                st.error(f"Error reading file {file.path}: {str(e)}")
-                                continue
-
-                        try:
-                            # Create class dependency graph
-                            graph = analyzer.analyze_class_dependencies(combined_code)
-
-                            # Display Class Relationships Tables
-                            st.subheader("Class Relationships Analysis")
-
-                            # Split relationships by type
-                            inheritance_data = []
-                            implementation_data = []
-                            association_data = []
-                            composition_data = []
-
-                            for source, target, data in graph.edges(data=True):
-                                relationship_type = data.get('type', 'Association')
-                                relationship_info = {
-                                    'Source Class': source,
-                                    'Target Class': target,
-                                    'Details': data.get('details', '')
-                                }
-
-                                if relationship_type == 'Inheritance':
-                                    inheritance_data.append(relationship_info)
-                                elif relationship_type == 'Implementation':
-                                    implementation_data.append(relationship_info)
-                                elif relationship_type == 'Composition':
-                                    composition_data.append(relationship_info)
-                                else:
-                                    association_data.append(relationship_info)
-
-                            # Display Inheritance Relationships
-                            if inheritance_data:
-                                st.markdown("### 🔵 Inheritance Relationships")
-                                st.markdown("Shows parent-child relationships between classes")
-                                df_inheritance = pd.DataFrame(inheritance_data)
-                                st.dataframe(
-                                    df_inheritance,
-                                    column_config={
-                                        'Source Class': st.column_config.TextColumn('Child Class'),
-                                        'Target Class': st.column_config.TextColumn('Parent Class'),
-                                        'Details': st.column_config.TextColumn('Description')
-                                    },
-                                    hide_index=True
-                                )
-
-                            # Display Interface Implementations
-                            if implementation_data:
-                                st.markdown("### 🟢 Interface Implementations")
-                                st.markdown("Shows which classes implement which interfaces")
-                                df_implementation = pd.DataFrame(implementation_data)
-                                st.dataframe(
-                                    df_implementation,
-                                    column_config={
-                                        'Source Class': st.column_config.TextColumn('Implementing Class'),
-                                        'Target Class': st.column_config.TextColumn('Interface'),
-                                        'Details': st.column_config.TextColumn('Description')
-                                    },
-                                    hide_index=True
-                                )
-
-                            # Display Composition Relationships
-                            if composition_data:
-                                st.markdown("### 🔴 Composition Relationships")
-                                st.markdown("Shows strong 'has-a' relationships where one class contains another")
-                                df_composition = pd.DataFrame(composition_data)
-                                st.dataframe(
-                                    df_composition,
-                                    column_config={
-                                        'Source Class': st.column_config.TextColumn('Container Class'),
-                                        'Target Class': st.column_config.TextColumn('Contained Class'),
-                                        'Details': st.column_config.TextColumn('Description')
-                                    },
-                                    hide_index=True
-                                )
-
-                            # Display Association Relationships
-                            if association_data:
-                                st.markdown("### ⚫ Association Relationships")
-                                st.markdown("Shows loose coupling between classes (uses, depends on)")
-                                df_association = pd.DataFrame(association_data)
-                                st.dataframe(
-                                    df_association,
-                                    column_config={
-                                        'Source Class': st.column_config.TextColumn('Using Class'),
-                                        'Target Class': st.column_config.TextColumn('Used Class'),
-                                        'Details': st.column_config.TextColumn('Description')
-                                    },
-                                    hide_index=True
-                                )
-
-                            # Add relationship type explanations
-                            with st.expander("ℹ️ Understanding Class Relationships"):
-                                st.markdown("""
-                                ### Types of Class Relationships
-
-                                #### 🔵 Inheritance
-                                - Represents "is-a" relationships
-                                - Child class inherits properties and methods from parent class
-                                - Example: `Car extends Vehicle`
-
-                                #### 🟢 Implementation
-                                - Shows which classes implement interfaces
-                                - Class must provide implementations for interface methods
-                                - Example: `Car implements Driveable`
-
-                                #### 🔴 Composition
-                                - Represents strong "has-a" relationships
-                                - Contained class lifecycle depends on container class
-                                - Example: `Car has Engine` (Engine cannot exist without Car)
-
-                                #### ⚫ Association
-                                - Represents loose "uses" relationships
-                                - Classes are independent but work together
-                                - Example: `Driver uses Car` (both can exist independently)
-                                """)
-
-                            # Create visualization
-                            st.subheader("Class Dependency Visualization")
-                            fig, ax = plt.subplots(figsize=(12, 8))
-                            pos = nx.spring_layout(graph, k=1, iterations=50)
-
-                            # Draw nodes (classes)
-                            nx.draw_networkx_nodes(graph, pos,
-                                node_color='lightblue',
-                                node_size=3000,
-                                alpha=0.7
-                            )
-
-                            # Draw edges (dependencies) with different colors based on relationship type
-                            edge_colors = {
-                                'Inheritance': 'blue',
-                                'Implementation': 'green',
-                                'Association': 'gray',
-                                'Composition': 'red'
-                            }
-
-                            for edge in graph.edges(data=True):
-                                edge_type = edge[2].get('type', 'Association')
-                                nx.draw_networkx_edges(graph, pos,
-                                    edgelist=[(edge[0], edge[1])],
-                                    edge_color=edge_colors.get(edge_type, 'gray'),
-                                    arrows=True,
-                                    arrowsize=20
-                                )
-
-                            # Add labels
-                            nx.draw_networkx_labels(graph, pos,
-                                font_size=8,
-                                font_weight='bold'
-                            )
-
-                            # Add title
-                            plt.title("Class Dependencies", pad=20, fontsize=16)
-
-                            # Save plot to BytesIO
-                            buf = BytesIO()
-                            plt.savefig(buf, format='png', bbox_inches='tight', dpi=300)
-                            buf.seek(0)
-                            plot_image = buf.getvalue()
-
-                            # Display download button for diagram
-                            st.download_button(
-                                "📥 Download Class Dependency Graph",
-                                plot_image,
-                                "class_dependencies.png",
-                                "image/png",
-                                help="Download the class dependency graph as a PNG image"
-                            )
-
-                            # Display graph
-                            st.image(plot_image, caption="Class Dependency Graph", width=None)
-
-                            # Display legend
-                            st.markdown("""
-                            **Legend:**
-                            - 🔵 Blue edges: Inheritance relationships
-                            - 🟢 Green edges: Interface implementations
-                            - ⚫ Gray edges: Associations/Dependencies
-                            - 🔴 Red edges: Composition relationships
-                            """)
-
-                            # Display statistics
-                            st.subheader("Dependency Statistics")
-                            stats = analyzer.get_dependency_statistics(graph)
-
-                            col1, col2, col3, col4 = st.columns(4)
-                            with col1:
-                                st.metric("Total Classes", stats['total_classes'])
-                            with col2:
-                                st.metric("Total Dependencies", stats['total_dependencies'])
-                            with col3:
-                                st.metric("Avg Dependencies per Class", f"{stats['avg_dependencies']:.2f}")
-                            with col4:
-                                st.metric("Inheritance Depth", stats.get('max_inheritance_depth', 0))
-
-                        except Exception as e:
-                            st.error(f"Error generating class dependency graph: {str(e)}")
-                            st.info("Please make sure the Java files contain valid code and class definitions.")
-
-            # Legacy Tables Tab
             with legacy_api_tab:
                 st.subheader("Legacy API & Table Analysis")
-
-                # Add tabs within the Legacy API tab
                 legacy_overview, table_list = st.tabs(["API Overview", "Legacy Tables"])
 
                 with legacy_overview:
@@ -447,7 +170,7 @@ def main():
                 with table_list:
                     st.subheader("Legacy Database Tables")
                     try:
-                        legacy_tables = legacy_analyzer.get_legacy_tables() # Use legacy_analyzer
+                        legacy_tables = legacy_analyzer.get_legacy_tables()
                         if legacy_tables:
                             for schema, tables in legacy_tables.items():
                                 with st.expander(f"Schema: {schema}", expanded=True):
@@ -466,14 +189,10 @@ def main():
                     except Exception as e:
                         st.error(f"Error analyzing legacy tables: {str(e)}")
 
-            # Service Graph Tab
             with services_tab:
                 st.subheader("Service-to-Service Interaction Analysis")
 
                 with st.spinner('Analyzing microservice interactions...'):
-                    #ms_analyzer = MicroserviceAnalyzer() #already initialized
-
-                    # Create visualization options
                     viz_type = st.radio(
                         "Select Visualization",
                         ["Service Dependency Graph", "API Interaction Map", "Service Matrix"]
@@ -482,16 +201,13 @@ def main():
                     if viz_type == "Service Dependency Graph":
                         graph, graph_data = ms_analyzer.generate_service_graph()
 
-                        # Create interactive graph visualization
                         fig, ax = plt.subplots(figsize=(12, 8))
                         pos = graph_data['positions']
 
-                        # Draw nodes with different colors for different service types
                         nx.draw_networkx_nodes(graph, pos,
-                                                    node_color='lightblue',
-                                                    node_size=2000)
+                                                node_color='lightblue',
+                                                node_size=2000)
 
-                        # Draw edges with different colors and styles
                         edge_colors = {
                             'feign': 'blue',
                             'rest': 'green',
@@ -502,20 +218,17 @@ def main():
                         for u, v, data in graph_data['edges']:
                             edge_type = data.get('type', 'rest')
                             nx.draw_networkx_edges(graph, pos,
-                                                        edgelist=[(u, v)],
-                                                        edge_color=edge_colors.get(edge_type, 'gray'),
-                                                        style='dashed' if edge_type == 'kafka' else 'solid')
+                                                    edgelist=[(u, v)],
+                                                    edge_color=edge_colors.get(edge_type, 'gray'),
+                                                    style='dashed' if edge_type == 'kafka' else 'solid')
 
-                        # Add labels
                         nx.draw_networkx_labels(graph, pos)
 
-                        # Save and display the graph
                         buf = BytesIO()
                         plt.savefig(buf, format='png', bbox_inches='tight')
                         buf.seek(0)
                         st.image(buf, caption="Service Dependency Graph", width=None)
 
-                        # Display legend
                         st.markdown("""
                         **Legend:**
                         - Blue edges: Feign Client connections
@@ -524,7 +237,6 @@ def main():
                         - Purple edges: Database interactions
                         """)
 
-            # API Details Tab
             with api_details_tab:
                 st.subheader("API Analysis")
                 api_type = st.radio(
@@ -560,7 +272,7 @@ def main():
                                         """)
                                         st.markdown("---")
 
-                else:  # SOAP Services
+                else:
                     with st.spinner('Analyzing SOAP Services...'):
                         soap_details = ms_analyzer.get_soap_service_details()
 
@@ -584,19 +296,15 @@ def main():
                                         """)
                                         st.markdown("---")
 
-            # Demographics Tab
             with demographics_tab:
                 st.subheader("Demographics Analysis")
                 with st.spinner('Analyzing demographic data usage...'):
-                    #demo_analyzer = DemographicsAnalyzer() # already initialized
-
                     display_demographics_summary(demo_analyzer)
                     usage_summary = demo_analyzer.get_usage_summary()
 
                     if not usage_summary:
                         st.info("No demographic data usage found in the codebase")
                     else:
-                        # Create a tab for each demographic category
                         categories = list(usage_summary.keys())
                         category_tabs = st.tabs(categories)
 
@@ -604,7 +312,6 @@ def main():
                             with category_tabs[idx]:
                                 st.subheader(f"{category} Fields")
 
-                                # Create a DataFrame for better visualization
                                 data = []
                                 for usage in usage_summary[category]:
                                     data.append({
@@ -619,7 +326,6 @@ def main():
                                     df = pd.DataFrame(data)
                                     st.dataframe(df, hide_index=True)
 
-                                    # Add download button for CSV export
                                     csv = df.to_csv(index=False)
                                     st.download_button(
                                         f"Download {category} Usage Data",
@@ -630,7 +336,6 @@ def main():
                                 else:
                                     st.info(f"No field usage found for {category}")
 
-            # Integration Patterns Tab
             with patterns_tab:
                 st.subheader("Integration Patterns Analysis")
                 analysis_type = st.radio(
@@ -638,8 +343,6 @@ def main():
                     ["API Endpoints", "Service Dependencies", "Service Graph"]
                 )
                 with st.spinner('Analyzing microservices...'):
-                    #ms_analyzer = MicroserviceAnalyzer() #already initialized
-
                     if analysis_type == "API Endpoints":
                         api_summary = ms_analyzer.get_api_summary()
                         for service, endpoints in api_summary.items():
@@ -662,33 +365,27 @@ def main():
                         with st.spinner('Generating service graph...'):
                             graph, graph_data = ms_analyzer.generate_service_graph()
 
-                            # Create matplotlib figure
                             fig, ax = plt.subplots(figsize=(12, 8))
                             pos = graph_data['positions']
 
-                            # Draw nodes
                             nx.draw_networkx_nodes(graph, pos,
-                                                        node_color='lightblue',
-                                                        node_size=2000)
+                                                    node_color='lightblue',
+                                                    node_size=2000)
 
-                            # Draw edges with different colors based on type
                             edge_colors = {'feign': 'blue', 'kafka': 'green', 'rest': 'red'}
                             for u, v, data in graph_data['edges']:
                                 edge_type = data.get('type', 'rest')
                                 nx.draw_networkx_edges(graph, pos,
-                                                            edgelist=[(u, v)],
-                                                            edge_color=edge_colors.get(edge_type, 'gray'))
+                                                        edgelist=[(u, v)],
+                                                        edge_color=edge_colors.get(edge_type, 'gray'))
 
-                            # Add labels
                             nx.draw_networkx_labels(graph, pos)
 
-                            # Save and display the graph
                             buf = BytesIO()
                             plt.savefig(buf, format='png', bbox_inches='tight')
                             buf.seek(0)
                             plot_image = buf.getvalue()
 
-                            # Download button
                             st.download_button(
                                 "Download Service Graph (PNG)",
                                 plot_image,
@@ -696,10 +393,8 @@ def main():
                                 "image/png"
                             )
 
-                            # Display graph
                             st.image(plot_image, caption="Service Dependency Graph", width=None)
 
-                            # Display legend
                             st.markdown("""
                             **Legend:**
                             - Blue edges: Feign Client connections
@@ -707,15 +402,11 @@ def main():
                             - Red edges: REST template calls
                             """)
 
-            # Database Tab (moved to a function call)
             with db_tab:
                 analyze_database_schema(java_files, project_path)
 
-            # New Analysis Summary Tab
             with analysis_tab:
                 st.subheader("Code Analysis Summary")
-
-                # Create three columns for different analysis aspects
                 patterns_col, demographics_col, integration_col = st.columns(3)
 
                 with patterns_col:
@@ -724,7 +415,6 @@ def main():
                     data = []
                     if patterns:
                         for pattern in patterns:
-                            # Check if pattern is a dictionary before accessing keys
                             if isinstance(pattern, dict):
                                 pattern_name = pattern.get('name', 'Unknown')
                                 pattern_type = pattern.get('type', 'Unknown')
@@ -743,7 +433,6 @@ def main():
                     else:
                         st.info("No specific patterns detected")
 
-
                 with demographics_col:
                     st.markdown("### Demographic Data Usage")
                     usage_data = demo_analyzer.get_usage_summary()
@@ -751,7 +440,6 @@ def main():
                         total_fields = sum(len(fields) for fields in usage_data.values())
                         st.metric("Total Demographic Fields", total_fields)
 
-                        # Display a summary of demographic data usage
                         data = []
                         for category, fields in usage_data.items():
                             data.append({
@@ -771,7 +459,6 @@ def main():
                     data = []
                     if int_patterns:
                         for pattern in int_patterns:
-                            # Check if pattern is a dictionary before accessing keys
                             if isinstance(pattern, dict):
                                 pattern_name = pattern.get('name', 'Unknown')
                                 pattern_type = pattern.get('type', 'Unknown')
@@ -804,10 +491,8 @@ def display_project_structure(project_structure):
         st.warning("No Java files found in the project")
         return
 
-    # Create data for the table view
     data = []
     for package, files in project_structure.items():
-        # Package row
         data.append({
             'Type': 'Package',
             'Name': package,
@@ -817,7 +502,6 @@ def display_project_structure(project_structure):
             'Description': f'Package containing {len(files)} files'
         })
 
-        # File rows
         for file in files:
             class_names = [cls['name'] for cls in file['classes']]
             total_methods_in_file = sum(len(cls['methods']) for cls in file['classes'])
@@ -830,10 +514,8 @@ def display_project_structure(project_structure):
                 'Description': file.get('description', '')
             })
 
-    # Create DataFrame
     df = pd.DataFrame(data)
 
-    # Display as an interactive table
     st.dataframe(df,
         column_config={
             'Type': st.column_config.TextColumn(
@@ -864,10 +546,8 @@ def display_project_structure(project_structure):
         hide_index=True
     )
 
-    # Display tree view without nested expanders
     st.subheader("Detailed Class View")
 
-    # Package selection
     selected_package = st.selectbox(
         "Select Package",
         options=list(project_structure.keys()),
@@ -877,7 +557,6 @@ def display_project_structure(project_structure):
     if selected_package:
         files = project_structure[selected_package]
 
-        # File selection
         file_paths = [file['path'] for file in files]
         selected_file = st.selectbox(
             "Select a file to view details",
@@ -887,21 +566,17 @@ def display_project_structure(project_structure):
         if selected_file:
             file = next((f for f in files if f['path'] == selected_file), None)
             if file:
-                #                # Display classes in the selected file
                 st.markdown(f"### Classes in {os.path.basename(selected_file)}")
 
-                # Handle class information display
                 if hasattr(file, 'classes'):
                     for class_info in file['classes']:
                         class_name = class_info['name'] if 'name' in class_info else 'Unknown Class'
                         with st.expander(f"📚 {class_name}"):
-                            # Class inheritance
                             if 'extends' in class_info and class_info['extends']:
                                 st.markdown(f"*Extends:* `{class_info['extends']}`")
                             if 'implements' in class_info and class_info['implements']:
                                 st.markdown(f"*Implements:* `{', '.join(class_info['implements'])}`")
 
-                            # Methods
                             st.markdown("**Methods:**")
                             if 'methods' in class_info:
                                 for method in class_info['methods']:
@@ -911,7 +586,6 @@ def display_project_structure(project_structure):
                                         method_name = method['name'] if 'name' in method else 'Unknown Method'
                                         st.markdown(f"- {method_name}")
 
-                            # Fields
                             st.markdown("**Fields:**")
                             if 'fields' in class_info:
                                 for field in class_info['fields']:
@@ -991,7 +665,7 @@ def generate_sequence_diagram(project_path):
     generator = SequenceDiagramGenerator()
 
     method_name = st.text_input("Enter method name to analyze:")
-    if method_name: # Corrected variable name
+    if method_name:
         with st.spinner('Generating sequence diagram...'):
             sequence_diagram = generator.analyze_method_calls(project_path, method_name)
             st.text_area("PlantUML Sequence Diagram", sequence_diagram, height=300)
@@ -1029,10 +703,8 @@ def analyze_database_schema(java_files, project_path):
         ["Legacy Systems Overview", "SQL Query Analysis"]
     )
 
-    # Initialize analyzer
     legacy_analyzer = LegacyTableAnalyzer()
 
-    # Analyze all Java files
     for file in java_files:
         file_path = os.path.join(project_path, file.path)
         try:
@@ -1045,7 +717,6 @@ def analyze_database_schema(java_files, project_path):
     if analysis_type == "Legacy Systems Overview":
         usage_summary = legacy_analyzer.get_usage_summary()
 
-        # Display metrics
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Legacy Systems", len(usage_summary))
@@ -1056,7 +727,6 @@ def analyze_database_schema(java_files, project_path):
             total_usages = sum(len(usages) for usages in usage_summary.values())
             st.metric("Total References", total_usages)
 
-        # Create tabs for each legacy system
         if usage_summary:
             systems = list(usage_summary.keys())
             system_tabs = st.tabs(systems)
@@ -1065,7 +735,6 @@ def analyze_database_schema(java_files, project_path):
                 with system_tabs[idx]:
                     st.subheader(f"{system} System Tables")
 
-                    # Create DataFrame for visualization
                     data = []
                     for usage in usage_summary[system]:
                         data.append({
@@ -1080,7 +749,6 @@ def analyze_database_schema(java_files, project_path):
                         df = pd.DataFrame(data)
                         st.dataframe(df, hide_index=True)
 
-                        # Add download button
                         csv = df.to_csv(index=False)
                         st.download_button(
                             f"Download {system} Usage Data",
@@ -1093,10 +761,9 @@ def analyze_database_schema(java_files, project_path):
         else:
             st.info("No legacy system usage found in the codebase")
 
-    else:  # SQL Query Analysis
+    else:
         st.subheader("SQL Query Analysis")
 
-        # Group queries by type
         sql_types = {
             "SELECT": [],
             "INSERT": [],
@@ -1104,13 +771,11 @@ def analyze_database_schema(java_files, project_path):
             "DELETE": []
         }
 
-        # Analyze all files for SQL queries
         for file in java_files:
             file_path = os.path.join(project_path, file.path)
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     code = f.read()
-                    # Extract SQL queries using regex patterns
                     for query_type in sql_types.keys():
                         pattern = rf'{query_type}\s+[^;]+;'
                         matches = re.finditer(pattern, code, re.IGNORECASE)
@@ -1122,7 +787,6 @@ def analyze_database_schema(java_files, project_path):
             except Exception as e:
                 st.error(f"Error analyzing SQL in file {file_path}: {str(e)}")
 
-        # Create tabs for different query types
         query_tabs = st.tabs(list(sql_types.keys()))
 
         for idx, (query_type, queries) in enumerate(sql_types.items()):
@@ -1151,19 +815,54 @@ def display_code_structure_summary(project_structure):
 
 
 def display_diagrams_summary(java_files):
-    col1, col2, col3 =st.columns(3)
-    with col1:
-        total_relationships = sum(1 for file in java_files for class_info in file.classes
-                               if 'extends' in class_info and class_info['extends'] or 'implements' in class_info and class_info['implements'])
-        st.metric("Class Relationships", total_relationships)
-    with col2:
-        inheritance_count = sum(1 for file in java_files for class_info in file.classes
-                              if 'extends' in class_info and class_info['extends'])
-        st.metric("Inheritance Links", inheritance_count)
-    with col3:
-        interface_count = sum(1 for file in java_files for class_info in file.classes
-                            if 'implements' in class_info and class_info['implements'])
-        st.metric("Interface Implementations", interface_count)
+    total_classes = sum(1 for file in java_files for _ in file.classes)
+    st.header(f"Class Diagram Analysis (Total Classes: {total_classes})")
+
+    diagram_type = st.radio(
+        "Select Diagram Type",
+        ["UML Class Diagram"]
+    )
+
+    if diagram_type == "UML Class Diagram":
+        with st.spinner('Generating class diagram...'):
+            uml_generator = UMLGenerator()
+            all_classes = []
+
+            for file in java_files:
+                for class_info in file.classes:
+                    java_class = JavaClass.from_dict(class_info)
+                    all_classes.append(java_class)
+
+            section_size = 10
+            class_sections = [all_classes[i:i + section_size]
+                              for i in range(0, len(all_classes), section_size)]
+
+            for i, section_classes in enumerate(class_sections, 1):
+                with st.expander(f"Class Diagram Section {i} ({len(section_classes)} classes)", expanded=True):
+                    uml_code, uml_image = uml_generator.generate_class_diagram(section_classes)
+
+                    st.image(uml_image, caption=f"Class Diagram Section {i}", width=None)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            label=f"📥 Download Section {i} (PNG)",
+                            data=uml_image,
+                            file_name=f"class_diagram_section_{i}.png",
+                            mime="image/png",
+                            help="Download this section of the UML diagram as a PNG image"
+                        )
+                    with col2:
+                        st.download_button(
+                            label=f"📄 Download PlantUML Code",
+                            data=uml_code,
+                            file_name=f"class_diagram_section_{i}.puml",
+                            mime="text/plain",
+                            help="Downloadthe PlantUML source code for this section"
+                        )
+
+                    with st.expander("View PlantUML Code"):
+                        st.code(uml_code, language="text")
 
 
 def display_legacysummary(legacy_analyzer):
